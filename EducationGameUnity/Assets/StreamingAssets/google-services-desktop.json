@@ -1,0 +1,31 @@
+{
+  "project_info": {
+    "project_number": "543013707268",
+    "project_id": "education-game-4a742",
+    "storage_bucket": "education-game-4a742.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:543013707268:ios:b845beefcdda8ccae99f51",
+        "android_client_info": {
+          "package_name": "com.educationgame.firebasedb"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "AIzaSyDx1_9XKyxTngRSk1TiOaW-DNJF06ZD9ZU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 0
+        },
+        "appinvite_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
