@@ -15,4 +15,9 @@ public class MainMenu : MonoBehaviour
 		SceneManager.LoadSceneAsync(13);
 	}
 
+	public void ChooseCharacter()
+	{
+		SceneManager.LoadSceneAsync(15);
+	}
+
 }
