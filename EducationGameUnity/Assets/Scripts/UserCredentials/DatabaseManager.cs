@@ -1,12 +1,13 @@
 using UnityEngine;
 using Firebase.Database;
 using UnityEngine.UI;
+using TMPro;
 
 public class DatabaseManager : MonoBehaviour
 {
 
-    public InputField email;
-    public InputField password;
+    public TMP_InputField email;
+    public TMP_InputField password;
 
     private string userID;
     private DatabaseReference dbReference;
@@ -19,6 +20,11 @@ public class DatabaseManager : MonoBehaviour
 
     public void CreateUser()
     {
+        Debug.Log("Email field: " + email);
+        Debug.Log("Password field: " + password);
+        Debug.Log("dbReference: " + dbReference);
+        Debug.Log("userID: " + userID);
+
         User newUser = new User(email.text, password.text);
         string json = JsonUtility.ToJson(newUser);
 
