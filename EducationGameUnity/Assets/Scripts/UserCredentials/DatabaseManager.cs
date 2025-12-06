@@ -10,9 +10,9 @@ public class DatabaseManager : MonoBehaviour
 
     public TMP_InputField username;
     public TMP_InputField password;
-    public TMP_Text usernameText;
-    public TMP_Text passwordText;
 
+    private TMP_Text usernameText;
+    private TMP_Text passwordText;
     private string userID;
     private DatabaseReference dbReference;
 
@@ -25,53 +25,72 @@ public class DatabaseManager : MonoBehaviour
     public void CreateUser()
     {
 
-        User newUser = new User(username.text, password.text);
+        string user = username.text.Trim();
+        string pass = password.text.Trim();
+
+        if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass))
+        {
+            return;
+        }
+
+        // Hashing password
+        string hash = PasswordHashing.Hash(pass);
+
+        // Create user
+        User newUser = new User(user, hash);
+
+        //JSON conversion
         string json = JsonUtility.ToJson(newUser);
 
-        dbReference.Child("users").Child(userID).SetRawJsonValueAsync(json);
-    }
-
-    public IEnumerator GetUsername(Action<string> onCallback)
-    {
-        var usernameData = dbReference.Child("users").Child(userID).Child("username").GetValueAsync();
-
-        yield return new WaitUntil(predicate: () => usernameData.IsCompleted);
-
-        if (usernameData != null)
+        dbReference.Child("users").Child(user).SetRawJsonValueAsync(json).ContinueWith(task =>
         {
-            DataSnapshot snapshot = usernameData.Result;
+            if (task.IsFaulted)
+            {
+                Debug.LogError("Failed to create user: " + task.Exception);
+            }
+            else
+            {
+                Debug.Log("User created successfully!");
+            }
+        });
 
-            onCallback.Invoke(snapshot.Value.ToString());
-        }
     }
 
-    /*
-    public IEnumerator GetPassword(Action<string> onCallback)
+    public void LogIn()
     {
-        var userPasswordData = dbReference.Child("users").Child(userID).Child("password").GetValueAsync();
 
-        yield return new WaitUntil(predicate: () => userPasswordData.IsCompleted);
+        string user = username.text.Trim();
+        string pass = password.text.Trim();
 
-        if (userPasswordData != null)
+        string hashedInput = PasswordHashing.Hash(pass);
+
+        dbReference.Child("users").Child(user).GetValueAsync().ContinueWith(task =>
         {
-            DataSnapshot snapshot = userPasswordData.Result;
+            if (!task.IsCompleted || task.Result == null)
+            {
+                return;
+            }
 
-            onCallback.Invoke(snapshot.Value.ToString());
-        }
+            DataSnapshot snapshot = task.Result;
+
+            if (!snapshot.Exists)
+            {
+                return;
+            }
+
+            string storedHash = snapshot.Child("passwordHash").Value.ToString();
+
+            if (storedHash == hashedInput)
+            {
+                Debug.Log("Log in successful!");
+            }
+            else
+            {
+                Debug.Log("Incorrect password");
+            }
+
+        });
+
     }
-
-    public void GetUserInfo()
-    {
-        StartCoroutine(GetEmail((string email) => {
-            emailText.text = "Email: " + email;
-
-        }));
-
-        StartCoroutine(GetPassword((string password) => {
-            passwordText.text = "Password: " + password;
-
-        }));
-    }
-    */
     
 }

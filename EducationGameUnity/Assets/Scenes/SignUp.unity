@@ -1590,10 +1590,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f521f7bdddac1c642b0463f5680ab78d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  email: {fileID: 196197524}
+  username: {fileID: 196197524}
   password: {fileID: 1290580474}
-  emailText: {fileID: 0}
-  passwordText: {fileID: 0}
 --- !u!4 &887124570
 Transform:
   m_ObjectHideFlags: 0
@@ -2294,6 +2292,6 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 507383968}
+  - {fileID: 252475494}
   - {fileID: 876684666}
   - {fileID: 887124570}
-  - {fileID: 252475494}

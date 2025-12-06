@@ -5,15 +5,15 @@ using UnityEngine.UI;
 public class User
 {
 
-    public string email;
-    public string password;
+    public string username;
+    public string passwordHash;
 
     public User() {}
 
-    public User(string email, string password)
+    public User(string username, string passwordHash)
     {
-        this.email = email;
-        this.password = password;
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
 }
