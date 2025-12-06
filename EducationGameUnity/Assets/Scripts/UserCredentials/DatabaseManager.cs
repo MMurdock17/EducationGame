@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class DatabaseManager : MonoBehaviour
 {
@@ -25,57 +26,53 @@ public class DatabaseManager : MonoBehaviour
 
     public void CreateUser()
     {
+    StartCoroutine(CreateUserRoutine());
+    }
 
-        string user = username.text.Trim();
-        string pass = password.text.Trim();
+    private IEnumerator CreateUserRoutine()
+    {
+        string typedUsername = username.text;
+        string typedPassword = password.text;
 
-        if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass))
+        // check if username already exists
+        var usersTask = dbReference.Child("users").GetValueAsync();
+        yield return new WaitUntil(() => usersTask.IsCompleted);
+
+        if (usersTask.Exception != null)
         {
-            prompt.text = "Username and password required.";
-            return;
+            usernameText.text = "Database error.";
+            yield break;
         }
 
-        dbReference.Child("users").Child(user).GetValueAsync().ContinueWith(task =>
+        DataSnapshot snapshot = usersTask.Result;
+
+        foreach (var user in snapshot.Children)
         {
-            if (task.IsFaulted)
+            string existingUsername = user.Child("username").Value?.ToString();
+            if (existingUsername == typedUsername)
             {
-                Debug.Log(task.Exception);
-                return;
+                usernameText.text = "Username already taken!";
+                yield break;
             }
-            DataSnapshot snapshot = task.Result;
+        }
 
-            // if username taken
-            if (snapshot.Exists)
-            {
-                UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                {
-                    prompt.text = "Username already exists. Please choose a different username or log in.";
-                });
-            }
-            // if username available
-            else
-            {
-                string hashed = PasswordHashing.Hash(pass);
-                User newUser = new User(user, hashed);
-                string json = JsonUtility.ToJson(newUser);
+        // Username is new -- create account
+        string hashedPassword = PasswordHashing.Hash(typedPassword);
 
-                dbReference.Child("users").Child(user).SetRawJsonValueAsync(json).ContinueWith(setTask =>
-                {
-                    if (setTask.IsFaulted)
-                    {
-                        Debug.LogError(setTask.Exception);
-                    }
-                    else
-                    {
-                        UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                        {
-                            prompt.text = "Account create successfully!";
-                        });
-                    }
-                });
-            }
-        });
+        User newUser = new User(typedUsername, hashedPassword);
+        string json = JsonUtility.ToJson(newUser);
 
+        var saveTask = dbReference.Child("users").Child(userID).SetRawJsonValueAsync(json);
+        yield return new WaitUntil(() => saveTask.IsCompleted);
+
+        if (saveTask.Exception != null)
+        {
+            usernameText.text = "Account could not be created.";
+            yield break;
+        }
+
+        // Load Main Menu
+        SceneManager.LoadSceneAsync(3);
     }
 
     public void LogIn()
@@ -88,11 +85,9 @@ public class DatabaseManager : MonoBehaviour
         string typedUsername = username.text;
         string typedPassword = password.text;
 
-        
+        prompt.text = "Checking...";
 
-        
         var usersTask = dbReference.Child("users").GetValueAsync();
-
         yield return new WaitUntil(() => usersTask.IsCompleted);
 
         if (usersTask.Exception != null)
@@ -103,24 +98,20 @@ public class DatabaseManager : MonoBehaviour
 
         DataSnapshot usersSnapshot = usersTask.Result;
 
-        bool usernameFound = false;
-
         foreach (var user in usersSnapshot.Children)
         {
             string dbUsername = user.Child("username").Value?.ToString();
             string dbPasswordHash = user.Child("password").Value?.ToString();
 
-            
+            // check for username
             if (dbUsername == typedUsername)
             {
-                usernameFound = true;
-
                 string typedHash = PasswordHashing.Hash(typedPassword);
 
                 if (typedHash == dbPasswordHash)
                 {
-                    prompt.text = "Login successful!";
-                    
+                    // Load Main Menu
+                    SceneManager.LoadSceneAsync(3);
                     yield break;
                 }
                 else
@@ -131,10 +122,7 @@ public class DatabaseManager : MonoBehaviour
             }
         }
 
-        if (!usernameFound)
-        {
-            prompt.text = "No account found with that username.";
-        }
+        prompt.text = "No account found with that username.";
     }
     
 }
