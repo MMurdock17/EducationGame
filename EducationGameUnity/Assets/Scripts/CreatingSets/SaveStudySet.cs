@@ -41,7 +41,7 @@ public class SaveStudySet : MonoBehaviour
 
         db.Child("users").Child(userID).Child("sets").Push().SetRawJsonValueAsync(json);
 
-        SceneManager.LoadSceneAsync(12);
+        SceneManager.LoadSceneAsync(11);
        
     }
 }

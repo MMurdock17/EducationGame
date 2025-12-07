@@ -20,33 +20,40 @@ public class SavedSetsManager : MonoBehaviour
         db = FirebaseDatabase.DefaultInstance.RootReference;
         userID = SystemInfo.deviceUniqueIdentifier;
 
+        Debug.Log("Using userID: " + userID);
+
         LoadSavedSets();
-    }
+        }
 
-    private void LoadSavedSets()
-    {
-        statusText.text = "Loading...";
-
-        var task = db.Child("users").Child(userID).Child("studySets").GetValueAsync();
-        task.ContinueWith(t =>
+        private void LoadSavedSets()
         {
-            if (t.IsFaulted)
-            {
-                Debug.LogError(t.Exception);
-                statusText.text = "Error loading sets";
-                return;
-            }
+            statusText.text = "Loading...";
 
-            if (t.IsCompleted)
+            var task = db.Child("users").Child(userID).Child("sets").GetValueAsync();
+            task.ContinueWith(t =>
             {
-                DataSnapshot snapshot = t.Result;
-
-                foreach (Transform child in contentParent)
+                if (t.IsFaulted)
                 {
-                    Destroy(child.gameObject);
+                    Debug.LogError("FIREBASE ERROR: " + t.Exception);
+                    statusText.text = "Error loading sets";
+                    return;
                 }
 
-                if (!snapshot.Exists)
+                if (!t.IsCompleted)
+                {
+                    Debug.Log("Firebase task did not complete.");
+                    return;
+                }
+
+                DataSnapshot snapshot = t.Result;
+
+                Debug.Log("Snapshot exists? " + snapshot.Exists);
+                Debug.Log("Snapshot children count: " + snapshot.ChildrenCount);
+
+                foreach (Transform child in contentParent)
+                    Destroy(child.gameObject);
+
+                if (!snapshot.Exists || snapshot.ChildrenCount == 0)
                 {
                     statusText.text = "No saved sets";
                     return;
@@ -56,14 +63,13 @@ public class SavedSetsManager : MonoBehaviour
 
                 foreach (var set in snapshot.Children)
                 {
+                    Debug.Log("Found set: " + set.Key);
                     string setID = set.Key;
                     string setName = set.Child("name").Value.ToString();
-
                     CreateSetRow(setID, setName);
                 }
-            }
-        });
-    }
+            });
+        }
 
     private void CreateSetRow(string setID, string setName)
     {
@@ -89,7 +95,7 @@ public class SavedSetsManager : MonoBehaviour
 
     public void DeleteSet(string setID, GameObject row)
     {
-        db.Child("users").Child(userID).Child("studySets").Child(setID).RemoveValueAsync();
+        db.Child("users").Child(userID).Child("sets").Child(setID).RemoveValueAsync();
 
         Destroy(row);
 

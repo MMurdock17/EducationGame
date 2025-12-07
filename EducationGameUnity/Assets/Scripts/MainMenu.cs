@@ -7,17 +7,17 @@ public class MainMenu : MonoBehaviour
     public void CreateSetScene()
 	{
 		
-		SceneManager.LoadSceneAsync(8);
+		SceneManager.LoadSceneAsync(7);
 	}
 
 	public void SavedSetsScene()
 	{
-		SceneManager.LoadSceneAsync(13);
+		SceneManager.LoadSceneAsync(12);
 	}
 
 	public void ChooseCharacter()
 	{
-		SceneManager.LoadSceneAsync(15);
+		SceneManager.LoadSceneAsync(13);
 	}
 
 }
