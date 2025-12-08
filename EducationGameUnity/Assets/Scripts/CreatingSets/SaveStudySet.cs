@@ -9,24 +9,17 @@ public class SaveStudySet : MonoBehaviour
     public TMP_InputField setNameField;
     public TMP_Text prompt;
 
-    private DatabaseReference db;
-
-    void Start()
-    {
-        db = FirebaseDatabase.DefaultInstance.RootReference;
-    }
-
     public void SaveSet()
     {
         string setName = setNameField.text;
 
-        List<Flashcard> cards = TempSetStorage.cards;
-
         if (string.IsNullOrWhiteSpace(setName))
         {
-            prompt.text = "Name your study set";
+            prompt.text = "Name your study set.";
             return;
         }
+
+        List<Flashcard> cards = TempSetStorage.cards;
 
         if (cards == null || cards.Count == 0)
         {
@@ -34,14 +27,23 @@ public class SaveStudySet : MonoBehaviour
             return;
         }
 
-        StudySet newSet = new StudySet(setName, cards);
-        string json = JsonUtility.ToJson(newSet);
+        SetData data = new SetData();
+        data.setName = setName;
+        data.questions = new List<QuestionData>();
 
-        string userID = SystemInfo.deviceUniqueIdentifier;
+        foreach (var card in cards)
+        {
+            data.questions.Add(new QuestionData
+            {
+                question = card.question,
+                answer = card.answer
+            });
+        }
 
-        db.Child("users").Child(userID).Child("sets").Push().SetRawJsonValueAsync(json);
+        string json = JsonUtility.ToJson(data);
+        PlayerPrefs.SetString("SavedSet", json);
+        PlayerPrefs.Save();
 
-        SceneManager.LoadSceneAsync(11);
-       
+        SceneManager.LoadScene("MainMenu");
     }
 }
