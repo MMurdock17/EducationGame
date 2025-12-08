@@ -1,6 +1,8 @@
 using UnityEngine;
 using TMPro;
 using Firebase.Database;
+using Firebase;
+using Firebase.Auth;
 using System.Collections.Generic;
 
 public class SavedSetsManager : MonoBehaviour

@@ -1,5 +1,7 @@
 using UnityEngine;
 using TMPro;
+using Firebase;
+using Firebase.Auth;
 using Firebase.Database;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;

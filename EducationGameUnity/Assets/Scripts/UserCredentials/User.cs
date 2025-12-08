@@ -1,5 +1,7 @@
 using UnityEngine;
 using Firebase.Database;
+using Firebase;
+using Firebase.Auth;
 using UnityEngine.UI;
 
 public class User
