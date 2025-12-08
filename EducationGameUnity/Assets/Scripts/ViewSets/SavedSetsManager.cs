@@ -1,113 +1,76 @@
 using UnityEngine;
-using System.Collections.Generic;
-using Firebase.Database;
 using TMPro;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
+using Firebase.Database;
+using System.Collections.Generic;
 
 public class SavedSetsManager : MonoBehaviour
 {
-    [Header("UI")]
-    public Transform contentParent;
-    public GameObject setListItemPrefab;
-    public TMP_Text statusText;
+    public TMP_Text loadingText;
+    public SavedSetSlot[] slots;
 
-    private DatabaseReference db;
-    private string userID;
-
-    void Start()
+    private void Start()
     {
-        db = FirebaseDatabase.DefaultInstance.RootReference;
-        userID = SystemInfo.deviceUniqueIdentifier;
+        LoadSets();
+    }
 
-        Debug.Log("Using userID: " + userID);
+    private async void LoadSets()
+    {
+        loadingText.text = "Loading sets...";
 
-        LoadSavedSets();
-        }
+        string userID = Firebase.Auth.FirebaseAuth.DefaultInstance.CurrentUser.UserId;
 
-        private void LoadSavedSets()
-        {
-            statusText.text = "Loading...";
+        DatabaseReference db = FirebaseDatabase.DefaultInstance.GetReference("users").Child(userID).Child("sets");
 
-            var task = db.Child("users").Child(userID).Child("sets").GetValueAsync();
-            task.ContinueWith(t =>
+        var snapshot = await db.GetValueAsync();
+
+        loadingText.gameObject.SetActive(false);
+
+        foreach (var slot in slots)
             {
-                if (t.IsFaulted)
-                {
-                    Debug.LogError("FIREBASE ERROR: " + t.Exception);
-                    statusText.text = "Error loading sets";
-                    return;
-                }
+                slot.ClearSlot();
+            }
 
-                if (!t.IsCompleted)
-                {
-                    Debug.Log("Firebase task did not complete.");
-                    return;
-                }
-
-                DataSnapshot snapshot = t.Result;
-
-                Debug.Log("Snapshot exists? " + snapshot.Exists);
-                Debug.Log("Snapshot children count: " + snapshot.ChildrenCount);
-
-                foreach (Transform child in contentParent)
-                    Destroy(child.gameObject);
-
-                if (!snapshot.Exists || snapshot.ChildrenCount == 0)
-                {
-                    statusText.text = "No saved sets";
-                    return;
-                }
-
-                statusText.text = "";
-
-                foreach (var set in snapshot.Children)
-                {
-                    Debug.Log("Found set: " + set.Key);
-                    string setID = set.Key;
-                    string setName = set.Child("name").Value.ToString();
-                    CreateSetRow(setID, setName);
-                }
-            });
-        }
-
-    private void CreateSetRow(string setID, string setName)
-    {
-        GameObject row = Instantiate(setListItemPrefab, contentParent);
-
-        TMP_Text nameText = row.transform.Find("SetNameText").GetComponent<TMP_Text>();
-        Button editButton = row.transform.Find("EditButton").GetComponent<Button>();
-        Button deleteButton = row.transform.Find("DeleteButton").GetComponent<Button>();
-        Button playButton = row.transform.Find("PlayButton").GetComponent<Button>();
-
-        nameText.text = setName;
-
-        editButton.onClick.AddListener(() => EditSet(setID));
-        deleteButton.onClick.AddListener(() => DeleteSet(setID, row));
-        playButton.onClick.AddListener(() => PlaySet(setID));
-    }
-
-    public void EditSet(string setID)
-    {
-        PlayerPrefs.SetString("editingSetID", setID);
-        SceneManager.LoadSceneAsync(1); // put scene number
-    }
-
-    public void DeleteSet(string setID, GameObject row)
-    {
-        db.Child("users").Child(userID).Child("sets").Child(setID).RemoveValueAsync();
-
-        Destroy(row);
-
-        if (contentParent.childCount == 0)
+        if (!snapshot.Exists)
         {
-            statusText.text = "No saved sets";
+            Debug.Log("No sets found.");
+            return;
+        }
+
+        int i = 0;
+
+        foreach (var setSnap in snapshot.Children)
+        {
+            if (i >= slots.Length)
+                {
+                    break;
+                }
+
+            string setId = setSnap.Key;
+            string setName = setSnap.Child("name").Value?.ToString() ?? "Unnamed Set";
+
+            var slot = slots[i];
+
+            slot.LoadSlot(setName,onEdit: () => EditSet(setId),onDelete: () => DeleteSet(setId),onPlay: () => PlaySet(setId));
+
+            i++;
         }
     }
 
-    public void PlaySet(string setID)
+    private void EditSet(string id)
     {
-        PlayerPrefs.SetString("playingSetID", setID);
-        SceneManager.LoadSceneAsync(1); // put scene number
+        Debug.Log("Editing: " + id);
+        // TODO: your logic
+    }
+
+    private void DeleteSet(string id)
+    {
+        Debug.Log("Deleting: " + id);
+        // TODO: delete logic
+    }
+
+    private void PlaySet(string id)
+    {
+        Debug.Log("Play: " + id);
+        // TODO: load set gameplay
     }
 }
