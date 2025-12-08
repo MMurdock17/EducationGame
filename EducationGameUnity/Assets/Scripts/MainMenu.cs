@@ -10,14 +10,9 @@ public class MainMenu : MonoBehaviour
 		SceneManager.LoadSceneAsync(7);
 	}
 
-	public void SavedSetsScene()
+	public void LoadGame()
 	{
-		SceneManager.LoadSceneAsync(12);
-	}
-
-	public void ChooseCharacter()
-	{
-		SceneManager.LoadSceneAsync(13);
+		SceneManager.LoadSceneAsync(14);
 	}
 
 }

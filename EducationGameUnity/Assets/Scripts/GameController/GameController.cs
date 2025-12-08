@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
 {
@@ -13,13 +14,21 @@ public class GameController : MonoBehaviour
     public Button answerButton1;
     public Button answerButton2;
 
-    private SetData loadedSet;
+    private StudySet loadedSet;
     private int currentIndex = 0;
     private string correctAnswer;
 
     void Start()
     {
         LoadSet();
+        if (loadedSet == null || loadedSet.cards == null || loadedSet.cards.Count == 0)
+        {
+            Debug.LogError("No valid cards to display!");
+            
+            SceneManager.LoadSceneAsync(3);
+            return;
+        }
+
         ShowQuestion();
     }
 
@@ -33,29 +42,45 @@ public class GameController : MonoBehaviour
             return;
         }
 
-        loadedSet = JsonUtility.FromJson<SetData>(json);
+        loadedSet = JsonUtility.FromJson<StudySet>(json);
+
+        if (loadedSet == null)
+        {
+            Debug.LogError("Failed to deserialize JSON!");
+            return;
+        }
+
+        if (loadedSet.cards == null || loadedSet.cards.Count == 0)
+        {
+            Debug.LogError("Loaded set has no cards!");
+        }
+        else
+        {
+            Debug.Log("Loaded " + loadedSet.cards.Count + " cards successfully.");
+        }
     }
 
     void ShowQuestion()
     {
         feedbackText.text = "";
 
-        if (currentIndex >= loadedSet.questions.Count)
-        {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+        
+        if (loadedSet == null || loadedSet.cards == null || loadedSet.cards.Count == 0)
             return;
+
+        if (currentIndex >= loadedSet.cards.Count)
+        {
+            SceneManager.LoadSceneAsync(3);
+            return; 
         }
 
-        QuestionData q = loadedSet.questions[currentIndex];
+        Flashcard q = loadedSet.cards[currentIndex];
 
-        // Set the question text
         questionText.text = q.question;
         correctAnswer = q.answer;
 
-        // Get a random WRONG answer
         string wrongAnswer = GetRandomWrongAnswer(q.answer);
 
-        // Randomize button placement
         if (Random.Range(0, 2) == 0)
         {
             answerButton1Text.text = correctAnswer;
@@ -67,7 +92,6 @@ public class GameController : MonoBehaviour
             answerButton2Text.text = correctAnswer;
         }
 
-        // Assign button listeners
         answerButton1.onClick.RemoveAllListeners();
         answerButton2.onClick.RemoveAllListeners();
 
@@ -79,7 +103,7 @@ public class GameController : MonoBehaviour
     {
         List<string> possible = new List<string>();
 
-        foreach (var q in loadedSet.questions)
+        foreach (var q in loadedSet.cards)
         {
             if (q.answer != correct)
                 possible.Add(q.answer);
@@ -93,16 +117,7 @@ public class GameController : MonoBehaviour
 
     void CheckAnswer(string chosen)
     {
-        if (chosen == correctAnswer)
-        {
-            feedbackText.text = "Good job!";
-        }
-        else
-        {
-            feedbackText.text = "That is incorrect.";
-        }
-
-        // Move to next question after 1 second
+        feedbackText.text = chosen == correctAnswer ? "Good job!" : "That is incorrect.";
         Invoke("NextQuestion", 1f);
     }
 

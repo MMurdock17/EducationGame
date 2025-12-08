@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+[System.Serializable]
 public class StudySet
 {
     public string setName;
